@@ -1,0 +1,122 @@
+﻿@model IEnumerable<DATN_StudentMangement.Models.Monhoc>
+
+@{
+    ViewBag.Title = "Quản lí môn học";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<div class="card-custom">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 text-uppercase">Danh sách môn học</h4>
+        <button class="btn btn-primary" onclick="moFormThem()">
+            <i class="fa-solid fa-plus"></i> Thêm môn học
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle" id="bangMonHoc" style="width:100%">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-center">Mã môn học</th>
+                    <th>Tên môn học</th>
+                    <th class="text-center">Số tín chỉ</th>
+                    <th class="text-center" style="width: 120px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center">@item.MaMH</td>
+                            <td>@item.TenMH</td>
+                            <td class="text-center">@item.SoTinChi</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-warning" onclick="moFormSua('@item.MaMH', '@item.TenMH', '@item.SoTinChi')">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <a href="@Url.Action("Xoa", "MonHoc", new { id = item.MaMH })" class="btn btn-sm btn-danger ms-1" onclick="return confirm('Xác nhận xóa môn học này khỏi hệ thống?');">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="monHocModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            @using (Html.BeginForm("LuuThongTin", "MonHoc", FormMethod.Post))
+            {
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="modalTitle">Thêm môn học</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mã môn học</label>
+                        <input type="text" class="form-control bg-light" id="MaMH" name="MaMH" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tên môn học</label>
+                        <input type="text" class="form-control" id="TenMH" name="TenMH" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số tín chỉ</label>
+                        <input type="number" class="form-control" id="SoTinChi" name="SoTinChi" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#bangMonHoc').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
+                },
+                "pageLength": 10,
+                "columnDefs": [
+                    { "orderable": false, "targets": 3 }
+                ]
+            });
+        });
+
+        var monHocModal = new bootstrap.Modal(document.getElementById('monHocModal'));
+
+        function moFormThem() {
+            document.getElementById('modalTitle').innerText = 'Thêm môn học mới';
+            // Điền sẵn mã lấy từ Controller
+            document.getElementById('MaMH').value = '@ViewBag.NextMaMH';
+            document.getElementById('TenMH').value = '';
+            document.getElementById('SoTinChi').value = '';
+            monHocModal.show();
+        }
+
+        function moFormSua(maMH, tenMH, soTinChi) {
+            document.getElementById('modalTitle').innerText = 'Cập nhật thông tin môn học';
+            document.getElementById('MaMH').value = maMH;
+            document.getElementById('TenMH').value = tenMH;
+            document.getElementById('SoTinChi').value = soTinChi;
+            monHocModal.show();
+        }
+    </script>
+}
