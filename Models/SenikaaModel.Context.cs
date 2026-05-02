@@ -25,11 +25,12 @@ namespace DATN_StudentMangement.Models
             throw new UnintentionalCodeFirstException();
         }
     
+        public virtual DbSet<Sinhvien> Sinhviens { get; set; }
         public virtual DbSet<ChiTietLopHP> ChiTietLopHPs { get; set; }
+        public virtual DbSet<GiangVien> GiangViens { get; set; }
         public virtual DbSet<LopHP> LopHPs { get; set; }
         public virtual DbSet<Monhoc> Monhocs { get; set; }
-        public virtual DbSet<Taikhoan> Taikhoans { get; set; }
-        public virtual DbSet<GiangVien> GiangViens { get; set; }
-        public virtual DbSet<Sinhvien> Sinhviens { get; set; }
+        public virtual DbSet<sysdiagram> sysdiagrams { get; set; }
+        public virtual DbSet<TaiKhoan> TaiKhoans { get; set; }
     }
 }

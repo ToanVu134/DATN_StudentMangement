@@ -23,6 +23,9 @@ namespace DATN_StudentMangement.Models
         public string MaMH { get; set; }
         public string TenMH { get; set; }
         public int SoTinChi { get; set; }
+        public Nullable<int> TyLeTX1 { get; set; }
+        public Nullable<int> TyLeTX2 { get; set; }
+        public Nullable<int> TyLeThi { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<LopHP> LopHPs { get; set; }

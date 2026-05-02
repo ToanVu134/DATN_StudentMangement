@@ -1,0 +1,249 @@
+﻿@model IEnumerable<DATN_StudentMangement.Models.ChiTietLopHP>
+@{
+    var lhp = ViewBag.LopHP as DATN_StudentMangement.Models.LopHP;
+    ViewBag.Title = "Quản lý sinh viên lớp " + lhp.MaLHP;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    bool isLocked = lhp.TrangThai == "Đã khóa";
+    bool isAdmin = Session["Quyen"] != null && Session["Quyen"].ToString() == "Admin";
+    bool isAuthorizedGV = Session["Quyen"] != null && Session["Quyen"].ToString() == "GiangVien" && Session["MaGV"]?.ToString() == lhp.MaGV;
+    bool canEditScores = isAdmin || isAuthorizedGV;
+    bool canManageStudents = isAdmin && !isLocked;
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<div class="card-custom">
+    @if (TempData["ThongBao"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="thongBaoHeThong">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["ThongBao"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="loiHeThong">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="mb-4">
+        <a href="@Url.Action("Index", "LopHP")" class="btn btn-outline-secondary mb-3">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại
+        </a>
+        <h4 class="text-uppercase">Lớp: @lhp.Monhoc.TenMH (@lhp.MaLHP)</h4>
+        <p class="text-muted">
+            Giảng viên: @(lhp.GiangVien != null ? lhp.GiangVien.HoTen : "Chưa phân công") |
+            Kỳ: @lhp.HocKi | Năm: @lhp.NamHoc | Thứ: @lhp.Thu | Buổi: @lhp.Buoi |
+            Trạng thái: <span class="badge @(isLocked ? "bg-danger" : "bg-success")">@lhp.TrangThai</span>
+        </p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3">
+                    <div class="text-muted small fw-bold mb-1">Tổng sinh viên</div>
+                    <h4 class="mb-0 text-primary"><i class="fa-solid fa-user-group me-2"></i>@ViewBag.TongSinhVien</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3">
+                    <div class="text-muted small fw-bold mb-1">Điểm TB</div>
+                    <h4 class="mb-0 text-success"><i class="fa-solid fa-arrow-trend-up me-2"></i>@ViewBag.DiemTrungBinh</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3">
+                    <div class="text-muted small fw-bold mb-1">Tỷ lệ đạt</div>
+                    <h4 class="mb-0 text-warning"><i class="fa-solid fa-award me-2"></i>@ViewBag.TyLeDat%</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-12 text-end">
+            <a href="@Url.Action("XuatExcelSinhVien", "LopHP", new { id = lhp.MaLHP })" class="btn btn-outline-success">
+                <i class="fa-solid fa-file-export"></i> Xuất Excel
+            </a>
+            @if (canManageStudents)
+            {
+                using (Html.BeginForm("ImportExcelSinhVien", "LopHP", FormMethod.Post, new { enctype = "multipart/form-data", @class = "d-inline-block" }))
+                {
+                    <input type="hidden" name="maLHP" value="@lhp.MaLHP" />
+                    <input type="file" name="fileExcel" id="fileExcelLHP" style="display: none;" accept=".xlsx, .xls" onchange="this.form.submit()" />
+                    <button type="button" class="btn btn-success ms-1" onclick="document.getElementById('fileExcelLHP').click()">
+                        <i class="fa-solid fa-file-import"></i> Nhập từ Excel
+                    </button>
+                }
+                <button class="btn btn-primary ms-1" data-bs-toggle="modal" data-bs-target="#modalAddSV">
+                    <i class="fa-solid fa-user-plus"></i> Thêm sinh viên
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle table-hover" id="bangDiemLop" style="width:100%">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Mã SV</th>
+                    <th>Họ và tên</th>
+                    <th style="width: 80px;">Vắng</th>
+                    <th style="width: 80px;">TX1</th>
+                    <th style="width: 80px;">TX2</th>
+                    <th style="width: 80px;">Thi</th>
+                    <th style="width: 80px;">Tổng kết</th>
+                    @if (canEditScores && !isLocked || canManageStudents)
+                    {
+                        <th>Thao tác</th>
+}
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold">@item.MaSV</td>
+                            <td>@item.Sinhvien.HoTen</td>
+                            <td>
+                                <input type="number" form="form_@item.MaSV" name="soBuoiVang" value="@item.SoBuoiVang" class="form-control form-control-sm text-center" @(!canEditScores || isLocked ? "disabled" : "") min="0" />
+                            </td>
+                            <td>
+                                <input type="number" step="0.1" form="form_@item.MaSV" name="diemTX1" value="@item.DiemTX1" class="form-control form-control-sm text-center" @(!canEditScores || isLocked ? "disabled" : "") min="0" max="10" />
+                            </td>
+                            <td>
+                                <input type="number" step="0.1" form="form_@item.MaSV" name="diemTX2" value="@item.DiemTX2" class="form-control form-control-sm text-center" @(!canEditScores || isLocked ? "disabled" : "") min="0" max="10" />
+                            </td>
+                            <td>
+                                <input type="number" step="0.1" form="form_@item.MaSV" name="diemThi" value="@item.DiemThi" class="form-control form-control-sm text-center" @(!canEditScores || isLocked ? "disabled" : "") min="0" max="10" />
+                            </td>
+                            <td class="text-center fw-bold text-primary">@item.DiemTongKet</td>
+
+                            @if (canEditScores && !isLocked || canManageStudents)
+                            {
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-1">
+                                        @if (canEditScores && !isLocked)
+                                        {
+                                            <form id="form_@item.MaSV" action="@Url.Action("CapNhatDiem", "LopHP")" method="post" class="m-0">
+                                                <input type="hidden" name="maLHP" value="@item.MaLHP" />
+                                                <input type="hidden" name="maSV" value="@item.MaSV" />
+                                                <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-floppy-disk"></i></button>
+                                            </form>
+                                        }
+                                        @if (canManageStudents)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="xoaSV('@item.MaSV')"><i class="fa-solid fa-user-minus"></i></button>
+                                        }
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (canManageStudents)
+{
+    <div class="modal fade" id="modalAddSV" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title">Thêm sinh viên vào lớp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                @using (Html.BeginForm("ThemNhieuSinhVien", "LopHP", FormMethod.Post))
+                {
+                    <input type="hidden" name="maLHP" value="@lhp.MaLHP" />
+                    <div class="modal-body" style="height: 50vh; overflow-y: auto;">
+                        <div class="mb-3 position-sticky top-0 bg-white pt-2 pb-2" style="z-index: 10;">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Nhập mã hoặc tên sinh viên để tìm kiếm nhanh..." onkeyup="filterStudents()">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle table-bordered">
+                                <thead class="table-light"><tr><th class="text-center"><input class="form-check-input" type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th><th>Mã SV</th><th>Họ tên</th><th>Khóa</th><th>Ngành học</th></tr></thead>
+                                <tbody>
+                                    @if (ViewBag.DSSinhVienNgoaiLop != null)
+                                    {
+                                        foreach (var sv in ViewBag.DSSinhVienNgoaiLop as List<DATN_StudentMangement.Models.Sinhvien>)
+                                        {
+                                            <tr class="student-row"><td class="text-center"><input class="form-check-input sv-checkbox" type="checkbox" name="selectedMaSV" value="@sv.MaSV"></td><td class="sv-ma">@sv.MaSV</td><td class="sv-ten">@sv.HoTen</td><td>@sv.KhoaNhapHoc</td><td>@sv.NganhHoc</td></tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Thêm đã chọn</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <form id="formXoaSV" action="@Url.Action("XoaSinhVienKhoiLop", "LopHP")" method="post">
+        <input type="hidden" name="maLHP" value="@lhp.MaLHP" />
+        <input type="hidden" name="maSV" id="maSVXoa" />
+    </form>
+}
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#bangDiemLop').DataTable({
+                "language": {
+                    "sProcessing": "Đang xử lý...",
+                    "sLengthMenu": "Hiển thị _MENU_ mục",
+                    "sZeroRecords": "Không tìm thấy dòng nào phù hợp",
+                    "sInfo": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                    "sInfoEmpty": "Đang xem 0 đến 0 trong tổng số 0 mục",
+                    "sInfoFiltered": "(được lọc từ _MAX_ mục)",
+                    "sInfoPostFix": "",
+                    "sSearch": "Tìm kiếm:",
+                    "sUrl": "",
+                    "oPaginate": { "sFirst": "Đầu", "sPrevious": "Trước", "sNext": "Tiếp", "sLast": "Cuối" },
+                    "oAria": { "sSortAscending": ": Kích hoạt để sắp xếp cột tăng dần", "sSortDescending": ": Kích hoạt để sắp xếp cột giảm dần" }
+                }
+            });
+
+            if ($('#thongBaoHeThong').length > 0) { setTimeout(function () { $('#thongBaoHeThong').fadeOut('slow'); }, 3000); }
+            if ($('#loiHeThong').length > 0) { setTimeout(function () { $('#loiHeThong').fadeOut('slow'); }, 3000); }
+        });
+
+        function xoaSV(ma) { if (confirm("Xóa sinh viên " + ma + " khỏi lớp?")) { $('#maSVXoa').val(ma); $('#formXoaSV').submit(); } }
+
+        function filterStudents() {
+            var input = document.getElementById("searchInput").value.toLowerCase();
+            var rows = document.getElementsByClassName("student-row");
+            for (var i = 0; i < rows.length; i++) {
+                var ma = rows[i].querySelector(".sv-ma").innerText.toLowerCase();
+                var ten = rows[i].querySelector(".sv-ten").innerText.toLowerCase();
+                rows[i].style.display = (ma.includes(input) || ten.includes(input)) ? "" : "none";
+            }
+        }
+
+        function toggleSelectAll(source) {
+            var checkboxes = document.querySelectorAll('.sv-checkbox');
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].closest('tr').style.display !== 'none') checkboxes[i].checked = source.checked;
+            }
+        }
+    </script>
+}

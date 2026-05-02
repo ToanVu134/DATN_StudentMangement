@@ -24,14 +24,15 @@ namespace DATN_StudentMangement.Models
         public string MaMH { get; set; }
         public string MaGV { get; set; }
         public string Thu { get; set; }
-        public string Tiet { get; set; }
         public Nullable<int> SiSoToiDa { get; set; }
-        public Nullable<System.DateTime> NgayBatDau { get; set; }
-        public Nullable<System.DateTime> NgayKetThuc { get; set; }
+        public string NamHoc { get; set; }
+        public string HocKi { get; set; }
+        public string TrangThai { get; set; }
+        public string Buoi { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<ChiTietLopHP> ChiTietLopHPs { get; set; }
-        public virtual Monhoc Monhoc { get; set; }
         public virtual GiangVien GiangVien { get; set; }
+        public virtual Monhoc Monhoc { get; set; }
     }
 }

@@ -1,0 +1,42 @@
+﻿@{
+    ViewBag.Title = "Đổi mật khẩu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card-custom mx-auto mt-4" style="max-width: 500px;">
+    <h4 class="text-center mb-4 text-uppercase text-primary">Thay đổi mật khẩu</h4>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@ViewBag.ErrorMessage
+        </div>
+    }
+
+    @using (Html.BeginForm("DoiMatKhau", "HeThong", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Mật khẩu hiện tại</label>
+            <input type="password" class="form-control" name="matKhauCu" required />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Mật khẩu mới</label>
+            <input type="password" class="form-control" name="matKhauMoi" required minlength="6" />
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold">Xác nhận mật khẩu mới</label>
+            <input type="password" class="form-control" name="xacNhanMatKhau" required minlength="6" />
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary shadow-sm">
+                <i class="fa-solid fa-key me-2"></i>Cập nhật mật khẩu
+            </button>
+            <a href="@Url.Action("Index", "LopHP")" class="btn btn-light border">Hủy thao tác</a>
+        </div>
+    }
+</div>

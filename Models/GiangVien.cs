@@ -30,8 +30,10 @@ namespace DATN_StudentMangement.Models
         public string HocVi { get; set; }
         public string ChuyenNganh { get; set; }
         public string AnhDaiDien { get; set; }
+        public Nullable<int> MaTK { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<LopHP> LopHPs { get; set; }
+        public virtual TaiKhoan TaiKhoan { get; set; }
     }
 }

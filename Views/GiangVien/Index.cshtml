@@ -1,0 +1,248 @@
+﻿@model IEnumerable<DATN_StudentMangement.Models.GiangVien>
+@{
+    ViewBag.Title = "Quản lí giảng viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<div class="card-custom">
+    @if (TempData["ThongBao"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="thongBaoHeThong">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["ThongBao"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="loiHeThong">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 text-uppercase text-primary">Danh sách giảng viên</h4>
+        <div>
+            <a href="@Url.Action("XuatExcel", "GiangVien")" class="btn btn-info text-white me-2">
+                <i class="fa-solid fa-file-export"></i> Xuất Excel
+            </a>
+            <button class="btn btn-primary" onclick="moFormThem()"><i class="fa-solid fa-user-tie"></i> Thêm giảng viên</button>
+        </div>
+    </div>
+
+    <div class="row mb-4 bg-light p-3 rounded mx-0">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Lọc theo Học hàm</label>
+            <select id="filterHocHam" class="form-select" onchange="locDuLieu()">
+                <option value="">-- Tất cả học hàm --</option>
+                @if (ViewBag.DSHocHam != null)
+                {
+                    foreach (var h in ViewBag.DSHocHam)
+                    {
+                        <option value="@h" @(Request.QueryString["hocHam"] == h ? "selected" : "")>@h</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Lọc theo Học vị</label>
+            <select id="filterHocVi" class="form-select" onchange="locDuLieu()">
+                <option value="">-- Tất cả học vị --</option>
+                @if (ViewBag.DSHocVi != null)
+                {
+                    foreach (var h in ViewBag.DSHocVi)
+                    {
+                        <option value="@h" @(Request.QueryString["hocVi"] == h ? "selected" : "")>@h</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle" id="bangGiangVien" style="width:100%">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Mã GV</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Khoa</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null)
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center"><img src="@(string.IsNullOrEmpty(item.AnhDaiDien) ? "/Content/Images/default-avatar.png" : item.AnhDaiDien)" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;" /></td>
+                            <td class="text-center fw-bold">@item.MaGV</td>
+                            <td>@item.HoTen</td>
+                            <td>@item.Email</td>
+                            <td>@item.ChuyenNganh</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-warning" onclick="moFormSua('@item.MaGV', '@item.HoTen', '@item.GioiTinh', '@(item.NgaySinh.HasValue ? item.NgaySinh.Value.ToString("yyyy-MM-dd") : "")', '@item.SoDT', '@item.Email', '@item.HocHam', '@item.HocVi', '@item.ChuyenNganh', '@item.AnhDaiDien')"><i class="fa-solid fa-pen"></i></button>
+                                <a href="@Url.Action("Xoa", "GiangVien", new { id = item.MaGV })" class="btn btn-sm btn-danger" onclick="return confirm('Xác nhận xóa?');"><i class="fa-solid fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="gvModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            @using (Html.BeginForm("LuuThongTin", "GiangVien", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Thông tin giảng viên</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Mã giảng viên</label>
+                        <input type="text" class="form-control bg-light" id="MaGV" name="MaGV" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-danger">Mật khẩu (Tài khoản)</label>
+                        <input type="text" class="form-control" id="MatKhau" name="MatKhau" placeholder="Để trống nếu không đổi, mặc định 123456">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Họ và tên</label>
+                        <input type="text" class="form-control" id="HoTen" name="HoTen" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Giới tính</label>
+                        <select class="form-select" id="GioiTinh" name="GioiTinh">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Ngày sinh</label>
+                        <input type="date" class="form-control" id="NgaySinh" name="NgaySinh">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Số điện thoại</label>
+                        <input type="text" class="form-control" id="SoDT" name="SoDT">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" class="form-control" id="Email" name="Email">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Chuyên ngành</label>
+                        <input type="text" class="form-control" id="ChuyenNganh" name="ChuyenNganh">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Học hàm</label>
+                        <select class="form-select" id="HocHam" name="HocHam">
+                            <option value="">-- Không có --</option>
+                            <option value="Giáo sư">Giáo sư</option>
+                            <option value="Phó giáo sư">Phó giáo sư</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Học vị</label>
+                        <select class="form-select" id="HocVi" name="HocVi">
+                            <option value="Cử nhân">Cử nhân</option>
+                            <option value="Kỹ sư">Kỹ sư</option>
+                            <option value="Thạc sĩ">Thạc sĩ</option>
+                            <option value="Tiến sĩ">Tiến sĩ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Ảnh đại diện</label>
+                        <input type="file" class="form-control" id="fileAnh" name="fileAnh" accept="image/*" onchange="previewImage(this);">
+                        <div class="mt-2 text-center"><img id="imgPreview" src="" style="max-height: 120px; border-radius: 8px; display: none; border: 1px solid #ddd;" /></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary px-4">Lưu dữ liệu</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#bangGiangVien').DataTable({
+                "language": {
+                    "sProcessing": "Đang xử lý...",
+                    "sLengthMenu": "Hiển thị _MENU_ mục",
+                    "sZeroRecords": "Không tìm thấy dòng nào phù hợp",
+                    "sInfo": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                    "sInfoEmpty": "Đang xem 0 đến 0 trong tổng số 0 mục",
+                    "sInfoFiltered": "(được lọc từ _MAX_ mục)",
+                    "sInfoPostFix": "",
+                    "sSearch": "Tìm kiếm:",
+                    "sUrl": "",
+                    "oPaginate": {
+                        "sFirst": "Đầu",
+                        "sPrevious": "Trước",
+                        "sNext": "Tiếp",
+                        "sLast": "Cuối"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": Kích hoạt để sắp xếp cột tăng dần",
+                        "sSortDescending": ": Kích hoạt để sắp xếp cột giảm dần"
+                    }
+                }
+});
+
+            if ($('#thongBaoHeThong').length > 0) {
+                setTimeout(function () {
+                    $('#thongBaoHeThong').fadeOut('slow');
+                }, 3000);
+            }
+            if ($('#loiHeThong').length > 0) {
+                setTimeout(function () {
+                    $('#loiHeThong').fadeOut('slow');
+                }, 3000);
+            }
+        });
+
+        var gvModal = new bootstrap.Modal(document.getElementById('gvModal'));
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) { $('#imgPreview').attr('src', e.target.result).show(); };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function locDuLieu() {
+            window.location.href = '@Url.Action("Index", "GiangVien")?hocHam=' + encodeURIComponent($('#filterHocHam').val()) + '&hocVi=' + encodeURIComponent($('#filterHocVi').val());
+        }
+
+        function moFormThem() {
+            $('#modalTitle').text('Thêm giảng viên mới');
+            $('#MaGV').val('@ViewBag.NextMaGV');
+            $('#HoTen, #NgaySinh, #SoDT, #Email, #ChuyenNganh, #fileAnh, #MatKhau').val('');
+            $('#imgPreview').hide();
+            gvModal.show();
+        }
+
+        function moFormSua(ma, ten, gt, ns, dt, email, hocHam, hocVi, chuyenNganh, anh) {
+            $('#modalTitle').text('Cập nhật giảng viên');
+            $('#MaGV').val(ma); $('#HoTen').val(ten); $('#GioiTinh').val(gt); $('#NgaySinh').val(ns);
+            $('#SoDT').val(dt); $('#Email').val(email); $('#HocHam').val(hocHam); $('#HocVi').val(hocVi); $('#ChuyenNganh').val(chuyenNganh);
+            $('#fileAnh, #MatKhau').val('');
+            if (anh) { $('#imgPreview').attr('src', anh).show(); } else { $('#imgPreview').hide(); }
+            gvModal.show();
+        }
+    </script>
+}

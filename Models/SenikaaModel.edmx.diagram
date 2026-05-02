@@ -4,17 +4,19 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="87237d2bde374935ac72a1380ddc31fe" Name="Diagram1" ZoomLevel="86">
-        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.ChiTietLopHP" Width="1.5" PointX="5.25" PointY="1.25" IsExpanded="true" />
-        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.LopHP" Width="1.5" PointX="3" PointY="1" IsExpanded="true" />
-        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.Monhoc" Width="1.5" PointX="0.75" PointY="5.625" IsExpanded="true" />
-        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.Taikhoan" Width="1.5" PointX="5.75" PointY="4.75" IsExpanded="true" />
-        <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK__ChiTietLo__MaLHP__4316F928" ManuallyRouted="false" />
-        <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK__LopHP__MaMH__3F466844" ManuallyRouted="false" />
-        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.GiangVien" Width="1.5" PointX="0.75" PointY="1" />
-        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.Sinhvien" Width="1.5" PointX="3" PointY="6.375" />
+      <Diagram DiagramId="87237d2bde374935ac72a1380ddc31fe" Name="Diagram1" ZoomLevel="70">
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.Sinhvien" Width="1.5" PointX="8.625" PointY="5.625" />
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.ChiTietLopHP" Width="1.5" PointX="5" PointY="5.5" />
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.GiangVien" Width="1.5" PointX="2.125" PointY="9.5" />
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.LopHP" Width="1.5" PointX="5" PointY="9.5" />
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.Monhoc" Width="1.5" PointX="8.5" PointY="10.125" />
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.sysdiagram" Width="1.5" PointX="13.625" PointY="4.75" />
+        <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK__ChiTietLo__MaLHP__4316F928" />
         <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK__ChiTietLop__MaSV__440B1D61" />
         <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK__LopHP__MaGV__403A8C7D" />
+        <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK__LopHP__MaMH__3F466844" />
+        <EntityTypeShape EntityType="QuanLiSinhVien_SenikaaModel.TaiKhoan" Width="1.5" PointX="2.375" PointY="6.75" />
+        <AssociationConnector Association="QuanLiSinhVien_SenikaaModel.FK_GiangVien_TaiKhoan" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

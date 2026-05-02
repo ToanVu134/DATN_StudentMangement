@@ -1,0 +1,357 @@
+﻿@model IEnumerable<DATN_StudentMangement.Models.Sinhvien>
+
+@{
+    ViewBag.Title = "Quản lí sinh viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<div class="card-custom">
+    @if (TempData["ThongBao"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="thongBaoHeThong">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["ThongBao"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="loiHeThong">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 text-uppercase text-primary">Danh sách sinh viên</h4>
+        <div>
+            @using (Html.BeginForm("ImportExcel", "SinhVien", FormMethod.Post, new { enctype = "multipart/form-data", @class = "d-inline-block me-2" }))
+            {
+                <input type="file" name="fileExcel" id="fileExcel" style="display: none;" accept=".xlsx, .xls" onchange="this.form.submit()" />
+                <button type="button" class="btn btn-success" onclick="document.getElementById('fileExcel').click()">
+                    <i class="fa-solid fa-file-excel"></i> Nhập từ Excel
+                </button>
+            }
+            <button type="button" class="btn btn-info text-white ms-1 me-2" onclick="xuatExcel()">
+                <i class="fa-solid fa-file-export"></i> Xuất Excel
+            </button>
+            <button class="btn btn-primary" onclick="moFormThem()">
+                <i class="fa-solid fa-user-plus"></i> Thêm sinh viên
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3 text-center">
+                    <div class="text-muted small fw-bold mb-1">Tổng sinh viên</div>
+                    <h4 class="mb-0 text-primary">@ViewBag.TongSinhVien</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3 text-center">
+                    <div class="text-muted small fw-bold mb-1">Đang học</div>
+                    <h4 class="mb-0 text-success">@ViewBag.DangHoc</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3 text-center">
+                    <div class="text-muted small fw-bold mb-1">Đã tốt nghiệp</div>
+                    <h4 class="mb-0 text-info">@ViewBag.DaTotNghiep</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3 text-center">
+                    <div class="text-muted small fw-bold mb-1">Bảo lưu</div>
+                    <h4 class="mb-0 text-warning">@ViewBag.BaoLuu</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3 text-center">
+                    <div class="text-muted small fw-bold mb-1">Đình chỉ</div>
+                    <h4 class="mb-0 text-danger">@ViewBag.DinhChi</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4 bg-light p-3 rounded mx-0">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Lọc theo Khóa</label>
+            <select id="filterKhoa" class="form-select" onchange="locDuLieu()">
+                <option value="">-- Tất cả khóa --</option>
+                @if (ViewBag.DSKhoa != null)
+                {
+                    foreach (var k in ViewBag.DSKhoa)
+                    {
+                        <option value="@k" @(Request.QueryString["khoa"] == k ? "selected" : "")>@k</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Lọc theo Ngành</label>
+            <select id="filterNganh" class="form-select" onchange="locDuLieu()">
+                <option value="">-- Tất cả ngành --</option>
+                @if (ViewBag.DSNganh != null)
+                {
+                    foreach (var n in ViewBag.DSNganh)
+                    {
+                        <option value="@n" @(Request.QueryString["nganh"] == n ? "selected" : "")>@n</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Lọc theo Trạng thái</label>
+            <select id="filterTrangThai" class="form-select" onchange="locDuLieu()">
+                <option value="">-- Tất cả trạng thái --</option>
+                @if (ViewBag.DSTrangThai != null)
+                {
+                    foreach (var tt in ViewBag.DSTrangThai)
+                    {
+                        <option value="@tt" @(Request.QueryString["trangThai"] == tt ? "selected" : "")>@tt</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle" id="bangSinhVien" style="width:100%">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Mã SV</th>
+                    <th>Họ và tên</th>
+                    <th>Khóa</th>
+                    <th>Ngành học</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null)
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center">
+                                <img src="@(string.IsNullOrEmpty(item.AnhDaiDien) ? "/Content/Images/default-avatar.png" : item.AnhDaiDien)"
+                                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;" />
+                            </td>
+                            <td class="text-center fw-bold">@item.MaSV</td>
+                            <td>@item.HoTen</td>
+                            <td class="text-center">@item.KhoaNhapHoc</td>
+                            <td>@item.NganhHoc</td>
+                            <td class="text-center">
+                                <span class="badge @(item.TrangThaiHocTap == "Đang học" ? "bg-success" : (item.TrangThaiHocTap == "Đã tốt nghiệp" ? "bg-primary" : "bg-warning"))">
+                                    @item.TrangThaiHocTap
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-warning" onclick="moFormSua('@item.MaSV', '@item.HoTen', '@item.GioiTinh', '@(item.NgaySinh.HasValue ? item.NgaySinh.Value.ToString("yyyy-MM-dd") : "")', '@item.SoDT', '@item.Email', '@item.KhoaNhapHoc', '@item.NganhHoc', '@item.TrangThaiHocTap', '@item.AnhDaiDien')">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <a href="@Url.Action("Xoa", "SinhVien", new { id = item.MaSV })" class="btn btn-sm btn-danger" onclick="return confirm('Xác nhận xóa sinh viên này khỏi hệ thống?');">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="svModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            @using (Html.BeginForm("LuuThongTin", "SinhVien", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Thông tin sinh viên</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Khóa nhập học (VD: K17)</label>
+                        <input type="text" class="form-control" id="KhoaNhapHoc" name="KhoaNhapHoc" placeholder="Nhập khóa để sinh mã..." required onkeyup="updateMaSV()">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Mã sinh viên</label>
+                        <input type="text" class="form-control bg-light fw-bold text-primary" id="MaSV" name="MaSV" readonly required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Họ và tên</label>
+                        <input type="text" class="form-control" id="HoTen" name="HoTen" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Giới tính</label>
+                        <select class="form-select" id="GioiTinh" name="GioiTinh">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Ngày sinh</label>
+                        <input type="date" class="form-control" id="NgaySinh" name="NgaySinh">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Số điện thoại</label>
+                        <input type="text" class="form-control" id="SoDT" name="SoDT">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" class="form-control" id="Email" name="Email">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Ngành học</label>
+                        <input type="text" class="form-control" id="NganhHoc" name="NganhHoc">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Trạng thái học tập</label>
+                        <select class="form-select" id="TrangThaiHocTap" name="TrangThaiHocTap">
+                            <option value="Đang học">Đang học</option>
+                            <option value="Bảo lưu">Bảo lưu</option>
+                            <option value="Đã tốt nghiệp">Đã tốt nghiệp</option>
+                            <option value="Đình chỉ">Đình chỉ</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Ảnh đại diện</label>
+                        <input type="file" class="form-control" id="fileAnh" name="fileAnh" accept="image/*" onchange="previewImage(this);">
+                        <div class="mt-2 text-center">
+                            <img id="imgPreview" src="" style="max-height: 120px; border-radius: 8px; display: none; border: 1px solid #ddd;" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary px-4">Lưu dữ liệu</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#bangSinhVien').DataTable({
+                "language": {
+                    "sProcessing": "Đang xử lý...",
+                    "sLengthMenu": "Hiển thị _MENU_ mục",
+                    "sZeroRecords": "Không tìm thấy dòng nào phù hợp",
+                    "sInfo": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                    "sInfoEmpty": "Đang xem 0 đến 0 trong tổng số 0 mục",
+                    "sInfoFiltered": "(được lọc từ _MAX_ mục)",
+                    "sInfoPostFix": "",
+                    "sSearch": "Tìm kiếm:",
+                    "sUrl": "",
+                    "oPaginate": {
+                        "sFirst": "Đầu",
+                        "sPrevious": "Trước",
+                        "sNext": "Tiếp",
+                        "sLast": "Cuối"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": Kích hoạt để sắp xếp cột tăng dần",
+                        "sSortDescending": ": Kích hoạt để sắp xếp cột giảm dần"
+                    }
+                }
+            });
+
+            if ($('#thongBaoHeThong').length > 0) {
+                setTimeout(function () {
+                    $('#thongBaoHeThong').fadeOut('slow');
+                }, 3000);
+            }
+            if ($('#loiHeThong').length > 0) {
+                setTimeout(function () {
+                    $('#loiHeThong').fadeOut('slow');
+                }, 3000);
+            }
+        });
+
+        var svModal = new bootstrap.Modal(document.getElementById('svModal'));
+        var isEditMode = false;
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) { $('#imgPreview').attr('src', e.target.result).show(); }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function locDuLieu() {
+            var khoa = encodeURIComponent($('#filterKhoa').val() || "");
+            var nganh = encodeURIComponent($('#filterNganh').val() || "");
+            var trangThai = encodeURIComponent($('#filterTrangThai').val() || "");
+            window.location.href = '@Url.Action("Index", "SinhVien")?khoa=' + khoa + '&nganh=' + nganh + '&trangThai=' + trangThai;
+        }
+
+        function xuatExcel() {
+            var khoa = encodeURIComponent($('#filterKhoa').val() || "");
+            var nganh = encodeURIComponent($('#filterNganh').val() || "");
+            var trangThai = encodeURIComponent($('#filterTrangThai').val() || "");
+            window.location.href = '@Url.Action("XuatExcel", "SinhVien")?khoa=' + khoa + '&nganh=' + nganh + '&trangThai=' + trangThai;
+        }
+
+        function updateMaSV() {
+            if (isEditMode) return;
+            var khoa = $('#KhoaNhapHoc').val() || "";
+            $.get('@Url.Action("GetNextMaSV", "SinhVien")', { khoa: khoa }, function (res) {
+                $('#MaSV').val(res.code);
+            });
+        }
+
+        function moFormThem() {
+            isEditMode = false;
+            $('#modalTitle').text('Thêm sinh viên mới');
+            $('#HoTen, #NgaySinh, #SoDT, #Email, #KhoaNhapHoc, #NganhHoc, #fileAnh').val('');
+            $('#TrangThaiHocTap').val('Đang học');
+            $('#imgPreview').hide();
+            updateMaSV();
+
+            svModal.show();
+        }
+
+        function moFormSua(ma, ten, gt, ns, dt, email, khoa, nganh, tt, anh) {
+            isEditMode = true;
+            $('#modalTitle').text('Cập nhật thông tin sinh viên');
+            $('#MaSV').val(ma);
+            $('#HoTen').val(ten);
+            $('#GioiTinh').val(gt);
+            $('#NgaySinh').val(ns);
+            $('#SoDT').val(dt);
+            $('#Email').val(email);
+            $('#KhoaNhapHoc').val(khoa);
+            $('#NganhHoc').val(nganh);
+            $('#TrangThaiHocTap').val(tt);
+            $('#fileAnh').val('');
+            if (anh) { $('#imgPreview').attr('src', anh).show(); } else { $('#imgPreview').hide(); }
+            svModal.show();
+        }
+    </script>
+}

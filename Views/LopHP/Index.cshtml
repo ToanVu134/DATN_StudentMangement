@@ -1,0 +1,280 @@
+﻿@model IEnumerable<DATN_StudentMangement.Models.LopHP>
+@{
+    ViewBag.Title = "Quản lý Lớp học phần";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isAdmin = Session["Quyen"] != null && Session["Quyen"].ToString() == "Admin";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+<div class="card-custom">
+    @if (TempData["ThongBao"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="thongBaoHeThong">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["ThongBao"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="loiHeThong">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0 text-uppercase">Danh sách lớp học phần</h4>
+        @if (isAdmin)
+        {
+            <button class="btn btn-primary" onclick="moFormThem()">
+                <i class="fa-solid fa-folder-plus"></i> Tạo lớp học phần
+            </button>
+        }
+    </div>
+
+    <div class="row mb-4 bg-light p-3 rounded mx-0">
+        <div class="col-md-4">
+            <label class="form-label small">Năm học</label>
+            <select id="fNamHoc" class="form-select" onchange="loc()">
+                <option value="">-- Tất cả năm --</option>
+                @foreach (var n in ViewBag.DSNamHoc)
+                {
+                    <option value="@n" @(Request.QueryString["namHoc"] == n ? "selected" : "")>@n</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Học kỳ</label>
+            <select id="fHocKi" class="form-select" onchange="loc()">
+                <option value="">-- Tất cả kỳ --</option>
+                @foreach (var k in ViewBag.DSHocKi)
+                {
+                    <option value="@k" @(Request.QueryString["hocKi"] == k ? "selected" : "")>@k</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-hover align-middle" id="tableLHP">
+        <thead class="table-light text-center">
+            <tr>
+                <th>Mã Lớp HP</th>
+                <th>Tên môn học</th>
+                <th>Giảng viên</th>
+                <th>Kỳ/Năm học</th>
+                <th>Thứ</th>
+                <th>Buổi</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.MaLHP</td>
+                    <td>@item.Monhoc.TenMH</td>
+                    <td>@(item.GiangVien != null ? item.GiangVien.HoTen : "")</td>
+                    <td class="text-center">@item.HocKi (@item.NamHoc)</td>
+                    <td class="text-center">@item.Thu</td>
+                    <td class="text-center">@item.Buoi</td>
+                    <td class="text-center">
+                        <span class="badge @(item.TrangThai == "Mở đăng ký" ? "bg-success" : (item.TrangThai == "Đã khóa" ? "bg-danger" : "bg-warning"))">
+                            @item.TrangThai
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="@Url.Action("DanhSachSinhVien", new { id = item.MaLHP })" class="btn btn-sm btn-info" title="Danh sách sinh viên">
+                            <i class="fa-solid fa-users"></i>
+                        </a>
+
+                        @if (isAdmin && item.TrangThai != "Đã khóa")
+                        {
+                            <button class="btn btn-sm btn-warning ms-1" onclick="moFormSua('@item.MaLHP','@item.MaMH','@item.MaGV','@item.NamHoc','@item.HocKi','@item.Thu','@item.Buoi','@item.SiSoToiDa')">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <a href="@Url.Action("Xoa", "LopHP", new { id = item.MaLHP })" class="btn btn-sm btn-danger ms-1" onclick="return confirm('Xác nhận xóa lớp này?')">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (isAdmin)
+{
+    <div class="modal fade" id="modalLHP" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                @using (Html.BeginForm("LuuThongTin", "LopHP", FormMethod.Post))
+                {
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title" id="titleModal">Thông tin lớp học phần</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mã lớp học phần</label>
+                            <input type="text" name="MaLHP" id="MaLHP" class="form-control bg-light" readonly required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Môn học</label>
+                            <select name="MaMH" id="MaMH" class="form-select" required>
+                                @foreach (var m in ViewBag.DSMonHoc)
+                                {
+                                    <option value="@m.MaMH">@m.TenMH</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Giảng viên hướng dẫn</label>
+                            <select name="MaGV" id="MaGV" class="form-select">
+                                @foreach (var g in ViewBag.DSGiangVien)
+                                {
+                                    <option value="@g.MaGV">@g.HoTen</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Năm học</label>
+                            <select name="NamHoc" id="NamHoc" class="form-select" onchange="updateMaLHP()">
+                                @for (int i = 2024; i <= 2030; i++)
+                                {
+                                    string n = $"{i}-{i + 1}";
+                                    <option value="@n" @(n == ViewBag.CurrentNamHoc ? "selected" : "")>@n</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Học kỳ</label>
+                            <select name="HocKi" id="HocKi" class="form-select" onchange="updateMaLHP()">
+                                @foreach (var k in ViewBag.DSHocKi)
+                                {
+                                    <option value="@k" @(k == ViewBag.CurrentHocKi ? "selected" : "")>@k</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Thứ</label>
+                            <select name="Thu" id="Thu" class="form-select">
+                                <option value="Thứ 2">Thứ 2</option>
+                                <option value="Thứ 3">Thứ 3</option>
+                                <option value="Thứ 4">Thứ 4</option>
+                                <option value="Thứ 5">Thứ 5</option>
+                                <option value="Thứ 6">Thứ 6</option>
+                                <option value="Thứ 7">Thứ 7</option>
+                                <option value="Chủ nhật">Chủ nhật</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Buổi học</label>
+                            <select name="Buoi" id="Buoi" class="form-select">
+                                <option value="Sáng">Sáng</option>
+                                <option value="Chiều">Chiều</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Sĩ số tối đa</label>
+                            <input type="number" name="SiSoToiDa" id="SiSoToiDa" class="form-control" value="50">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary px-4">Lưu dữ liệu</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tableLHP').DataTable({
+                "language": {
+                    "sProcessing": "Đang xử lý...",
+                    "sLengthMenu": "Hiển thị _MENU_ mục",
+                    "sZeroRecords": "Không tìm thấy dòng nào phù hợp",
+                    "sInfo": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                    "sInfoEmpty": "Đang xem 0 đến 0 trong tổng số 0 mục",
+                    "sInfoFiltered": "(được lọc từ _MAX_ mục)",
+                    "sInfoPostFix": "",
+                    "sSearch": "Tìm kiếm:",
+                    "sUrl": "",
+                    "oPaginate": {
+                        "sFirst": "Đầu",
+                        "sPrevious": "Trước",
+                        "sNext": "Tiếp",
+                        "sLast": "Cuối"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": Kích hoạt để sắp xếp cột tăng dần",
+                        "sSortDescending": ": Kích hoạt để sắp xếp cột giảm dần"
+                    }
+                } });
+
+            if ($('#thongBaoHeThong').length > 0) {
+                setTimeout(function () {
+                    $('#thongBaoHeThong').fadeOut('slow');
+                }, 3000);
+            }
+            if ($('#loiHeThong').length > 0) {
+                setTimeout(function () {
+                    $('#loiHeThong').fadeOut('slow');
+                }, 3000);
+            }
+        });
+
+        function loc() {
+            window.location.href = '@Url.Action("Index")?namHoc=' + $('#fNamHoc').val() + '&hocKi=' + $('#fHocKi').val();
+        }
+
+        @if (isAdmin)
+        {
+            <text>
+            var modal = new bootstrap.Modal(document.getElementById('modalLHP'));
+            var isEditMode = false;
+
+            function updateMaLHP() {
+                if (isEditMode) return;
+                $.get('@Url.Action("GetNextMaLHP", "LopHP")', { namHoc: $('#NamHoc').val(), hocKi: $('#HocKi').val() }, function (res) {
+                    $('#MaLHP').val(res.code);
+                });
+            }
+
+            function moFormThem() {
+                isEditMode = false;
+                $('#titleModal').text("Tạo lớp học phần mới");
+                $('#MaLHP').val("@ViewBag.DefaultMaLHP");
+                $('#NamHoc').val("@ViewBag.CurrentNamHoc");
+                $('#HocKi').val("@ViewBag.CurrentHocKi");
+                $('#Thu').val("Thứ 2");
+                $('#Buoi').val("Sáng");
+                $('#SiSoToiDa').val("50");
+                modal.show();
+            }
+
+            function moFormSua(ma, mh, gv, nh, hk, thu, buoi, ss) {
+                isEditMode = true;
+                $('#titleModal').text("Cập nhật lớp học phần");
+                $('#MaLHP').val(ma);
+                $('#MaMH').val(mh);
+                $('#MaGV').val(gv);
+                $('#NamHoc').val(nh);
+                $('#HocKi').val(hk);
+                $('#Thu').val(thu);
+                $('#Buoi').val(buoi);
+                $('#SiSoToiDa').val(ss);
+                modal.show();
+            }
+            </text>
+        }
+    </script>
+}

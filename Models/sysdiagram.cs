@@ -12,17 +12,12 @@ namespace DATN_StudentMangement.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class ChiTietLopHP
+    public partial class sysdiagram
     {
-        public string MaLHP { get; set; }
-        public string MaSV { get; set; }
-        public Nullable<double> DiemTX1 { get; set; }
-        public Nullable<double> DiemTX2 { get; set; }
-        public Nullable<double> DiemThi { get; set; }
-        public Nullable<double> DiemTongKet { get; set; }
-        public Nullable<int> SoBuoiVang { get; set; }
-    
-        public virtual LopHP LopHP { get; set; }
-        public virtual Sinhvien Sinhvien { get; set; }
+        public string name { get; set; }
+        public int principal_id { get; set; }
+        public int diagram_id { get; set; }
+        public Nullable<int> version { get; set; }
+        public byte[] definition { get; set; }
     }
 }

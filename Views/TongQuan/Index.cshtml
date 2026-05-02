@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "Tổng quan hệ thống";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card-custom mb-4">
+    <h4 class="text-uppercase text-primary mb-4">Thống kê tổng quan</h4>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 bg-primary text-white">
+                <div class="card-body p-4 text-center">
+                    <h6 class="mb-2 text-uppercase opacity-75">Tổng sinh viên</h6>
+                    <h2 class="mb-0">@ViewBag.TongSinhVien</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 bg-success text-white">
+                <div class="card-body p-4 text-center">
+                    <h6 class="mb-2 text-uppercase opacity-75">Tổng giảng viên</h6>
+                    <h2 class="mb-0">@ViewBag.TongGiangVien</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 bg-warning text-dark">
+                <div class="card-body p-4 text-center">
+                    <h6 class="mb-2 text-uppercase opacity-75">Lớp HP Đang mở</h6>
+                    <h2 class="mb-0">@ViewBag.TongLopHP</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body">
+                    <h6 class="text-center text-muted mb-4">TỶ LỆ SINH VIÊN THEO TRẠNG THÁI</h6>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="chartTrangThai"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body">
+                    <h6 class="text-center text-muted mb-4">PHÂN BỔ SINH VIÊN THEO KHOA (NGÀNH)</h6>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="chartNganh"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body">
+                    <h6 class="text-center text-muted mb-4">BIẾN ĐỘNG SỐ LƯỢNG SINH VIÊN THEO TỪNG KHÓA</h6>
+                    <div style="height: 350px; position: relative;">
+                        <canvas id="chartKhoa"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const labelsTrangThai = @Html.Raw(Json.Encode(ViewBag.LabelsTrangThai));
+        const dataTrangThai = @Html.Raw(Json.Encode(ViewBag.DataTrangThai));
+
+        const labelsNganh = @Html.Raw(Json.Encode(ViewBag.LabelsNganh));
+        const dataNganh = @Html.Raw(Json.Encode(ViewBag.DataNganh));
+
+        const labelsKhoa = @Html.Raw(Json.Encode(ViewBag.LabelsKhoa));
+        const dataKhoa = @Html.Raw(Json.Encode(ViewBag.DataKhoa));
+
+        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+        new Chart(document.getElementById('chartTrangThai'), {
+            type: 'pie',
+            data: {
+                labels: labelsTrangThai,
+                datasets: [{
+                    data: dataTrangThai,
+                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#64748b']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('chartNganh'), {
+            type: 'doughnut',
+            data: {
+                labels: labelsNganh,
+                datasets: [{
+                    data: dataNganh,
+                    backgroundColor: colors
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('chartKhoa'), {
+            type: 'line',
+            data: {
+                labels: labelsKhoa,
+                datasets: [{
+                    label: 'Số lượng sinh viên',
+                    data: dataKhoa,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+}

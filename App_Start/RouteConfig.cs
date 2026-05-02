@@ -16,7 +16,7 @@ namespace DATN_StudentMangement
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+                defaults: new { controller = "HeThong", action = "DangNhap", id = UrlParameter.Optional }
             );
         }
     }

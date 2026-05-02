@@ -12,9 +12,20 @@ namespace DATN_StudentMangement.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class Taikhoan
+    public partial class TaiKhoan
     {
-        public string MaAD { get; set; }
-        public string MatkhauAD { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public TaiKhoan()
+        {
+            this.GiangViens = new HashSet<GiangVien>();
+        }
+    
+        public int Id { get; set; }
+        public string TenDangNhap { get; set; }
+        public string MatKhau { get; set; }
+        public string Quyen { get; set; }
+    
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<GiangVien> GiangViens { get; set; }
     }
 }
