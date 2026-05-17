@@ -101,10 +101,11 @@
                     <th style="width: 80px;">TX2</th>
                     <th style="width: 80px;">Thi</th>
                     <th style="width: 80px;">Tổng kết</th>
+                    <th style="width: 80px;">Điểm chữ</th>
                     @if (canEditScores && !isLocked || canManageStudents)
                     {
                         <th>Thao tác</th>
-}
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -112,6 +113,20 @@
                 {
                     foreach (var item in Model)
                     {
+                        string diemChu = "";
+                        if (item.DiemTongKet.HasValue)
+                        {
+                            double dt = item.DiemTongKet.Value;
+                            if (dt >= 8.5) { diemChu = "A"; }
+                            else if (dt >= 8.0) { diemChu = "B+"; }
+                            else if (dt >= 7.0) { diemChu = "B"; }
+                            else if (dt >= 6.5) { diemChu = "C+"; }
+                            else if (dt >= 5.5) { diemChu = "C"; }
+                            else if (dt >= 5.0) { diemChu = "D+"; }
+                            else if (dt >= 4.0) { diemChu = "D"; }
+                            else { diemChu = "F"; }
+                        }
+
                         <tr>
                             <td class="text-center fw-bold">@item.MaSV</td>
                             <td>@item.Sinhvien.HoTen</td>
@@ -128,6 +143,7 @@
                                 <input type="number" step="0.1" form="form_@item.MaSV" name="diemThi" value="@item.DiemThi" class="form-control form-control-sm text-center" @(!canEditScores || isLocked ? "disabled" : "") min="0" max="10" />
                             </td>
                             <td class="text-center fw-bold text-primary">@item.DiemTongKet</td>
+                            <td class="text-center fw-bold text-danger">@diemChu</td>
 
                             @if (canEditScores && !isLocked || canManageStudents)
                             {
@@ -222,7 +238,6 @@
                     "oAria": { "sSortAscending": ": Kích hoạt để sắp xếp cột tăng dần", "sSortDescending": ": Kích hoạt để sắp xếp cột giảm dần" }
                 }
             });
-
             if ($('#thongBaoHeThong').length > 0) { setTimeout(function () { $('#thongBaoHeThong').fadeOut('slow'); }, 3000); }
             if ($('#loiHeThong').length > 0) { setTimeout(function () { $('#loiHeThong').fadeOut('slow'); }, 3000); }
         });

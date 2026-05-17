@@ -13,7 +13,7 @@ namespace DATN_StudentMangement.Controllers
     {
         private QuanLiSinhVien_SenikaaEntities db = new QuanLiSinhVien_SenikaaEntities();
 
-        public ActionResult Index(string namHoc, string hocKi)
+        public ActionResult Index(string namHoc, string hocKi, string thu)
         {
             if (Session["Quyen"] == null) return RedirectToAction("DangNhap", "HeThong");
 
@@ -22,14 +22,9 @@ namespace DATN_StudentMangement.Controllers
             string quyen = Session["Quyen"].ToString();
             var query = db.LopHPs.AsQueryable();
 
-            if (quyen == "GiangVien")
-            {
-                string maGV = Session["MaGV"].ToString();
-                query = query.Where(l => l.MaGV == maGV);
-            }
-
             ViewBag.DSNamHoc = db.LopHPs.Select(l => l.NamHoc).Distinct().OrderByDescending(n => n).ToList();
             ViewBag.DSHocKi = new List<string> { "Kỳ 1", "Kỳ Xuân", "Kỳ 2", "Kỳ Hè" };
+            ViewBag.DSThu = new List<string> { "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật" };
             ViewBag.DSMonHoc = db.Monhocs.ToList();
             ViewBag.DSGiangVien = db.GiangViens.ToList();
 
@@ -38,16 +33,69 @@ namespace DATN_StudentMangement.Controllers
             ViewBag.CurrentHocKi = current.HocKi;
             ViewBag.DefaultMaLHP = GenerateMaLHP(current.NamHoc, current.HocKi);
 
+            string currentThu = GetCurrentDayOfWeek();
+
+            if (quyen == "GiangVien")
+            {
+                string maGV = Session["MaGV"].ToString();
+                query = query.Where(l => l.MaGV == maGV);
+
+                if (string.IsNullOrEmpty(namHoc) && string.IsNullOrEmpty(hocKi) && string.IsNullOrEmpty(thu))
+                {
+                    namHoc = current.NamHoc;
+                    hocKi = current.HocKi;
+                    thu = currentThu;
+                }
+            }
+
+            ViewBag.SelectedNamHoc = namHoc;
+            ViewBag.SelectedHocKi = hocKi;
+            ViewBag.SelectedThu = thu;
+
             if (!string.IsNullOrEmpty(namHoc)) query = query.Where(l => l.NamHoc == namHoc);
             if (!string.IsNullOrEmpty(hocKi)) query = query.Where(l => l.HocKi == hocKi);
+            if (!string.IsNullOrEmpty(thu)) query = query.Where(l => l.Thu == thu);
 
             return View(query.ToList());
+        }
+
+        private string GetCurrentDayOfWeek()
+        {
+            switch (DateTime.Now.DayOfWeek)
+            {
+                case DayOfWeek.Monday: return "Thứ 2";
+                case DayOfWeek.Tuesday: return "Thứ 3";
+                case DayOfWeek.Wednesday: return "Thứ 4";
+                case DayOfWeek.Thursday: return "Thứ 5";
+                case DayOfWeek.Friday: return "Thứ 6";
+                case DayOfWeek.Saturday: return "Thứ 7";
+                case DayOfWeek.Sunday: return "Chủ nhật";
+                default: return "";
+            }
         }
 
         [HttpPost]
         public ActionResult LuuThongTin(LopHP model)
         {
             if (Session["Quyen"] == null || Session["Quyen"].ToString() != "Admin") return RedirectToAction("DangNhap", "HeThong");
+
+            if (!string.IsNullOrEmpty(model.MaGV))
+            {
+                var conflict = db.LopHPs.FirstOrDefault(l =>
+                    l.MaGV == model.MaGV &&
+                    l.NamHoc == model.NamHoc &&
+                    l.HocKi == model.HocKi &&
+                    l.Thu == model.Thu &&
+                    l.Buoi == model.Buoi &&
+                    l.TrangThai != "Đã khóa" &&
+                    l.MaLHP != model.MaLHP);
+
+                if (conflict != null)
+                {
+                    TempData["Error"] = $"Giảng viên đã có lịch dạy lớp {conflict.MaLHP} vào {model.Thu} - {model.Buoi} (Kỳ {model.HocKi}, {model.NamHoc}). Không thể xếp lịch trùng.";
+                    return RedirectToAction("Index");
+                }
+            }
 
             var lhp = db.LopHPs.Find(model.MaLHP);
             if (lhp != null)
@@ -291,7 +339,7 @@ namespace DATN_StudentMangement.Controllers
             using (var package = new ExcelPackage())
             {
                 var worksheet = package.Workbook.Worksheets.Add("DSSV_" + id);
-                string[] headers = { "Mã SV", "Họ tên", "Điểm TX1", "Điểm TX2", "Điểm Thi", "Tổng kết" };
+                string[] headers = { "Mã SV", "Họ tên", "Điểm TX1", "Điểm TX2", "Điểm Thi", "Tổng kết", "Điểm chữ" };
                 for (int i = 0; i < headers.Length; i++) { worksheet.Cells[1, i + 1].Value = headers[i]; worksheet.Cells[1, i + 1].Style.Font.Bold = true; }
                 int row = 2;
                 foreach (var item in dsSinhVien)
@@ -302,6 +350,22 @@ namespace DATN_StudentMangement.Controllers
                     worksheet.Cells[row, 4].Value = item.DiemTX2;
                     worksheet.Cells[row, 5].Value = item.DiemThi;
                     worksheet.Cells[row, 6].Value = item.DiemTongKet;
+
+                    string diemChu = "";
+                    if (item.DiemTongKet.HasValue)
+                    {
+                        double dt = item.DiemTongKet.Value;
+                        if (dt >= 8.5) diemChu = "A";
+                        else if (dt >= 8.0) diemChu = "B+";
+                        else if (dt >= 7.0) diemChu = "B";
+                        else if (dt >= 6.5) diemChu = "C+";
+                        else if (dt >= 5.5) diemChu = "C";
+                        else if (dt >= 5.0) diemChu = "D+";
+                        else if (dt >= 4.0) diemChu = "D";
+                        else diemChu = "F";
+                    }
+                    worksheet.Cells[row, 7].Value = diemChu;
+
                     row++;
                 }
                 worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();

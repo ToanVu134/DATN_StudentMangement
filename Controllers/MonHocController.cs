@@ -77,30 +77,23 @@ namespace DATN_StudentMangement.Controllers
                         int rowCount = worksheet.Dimension.Rows;
                         for (int row = 2; row <= rowCount; row++)
                         {
-                            string maMH = worksheet.Cells[row, 1].Text?.Trim();
-                            string tenMH = worksheet.Cells[row, 2].Text?.Trim();
-                            string soTCStr = worksheet.Cells[row, 3].Text?.Trim();
-                            string tyLeTX1Str = worksheet.Cells[row, 4].Text?.Trim();
-                            string tyLeTX2Str = worksheet.Cells[row, 5].Text?.Trim();
-                            string tyLeThiStr = worksheet.Cells[row, 6].Text?.Trim();
+                            string tenMH = worksheet.Cells[row, 1].Text?.Trim();
+                            string soTCStr = worksheet.Cells[row, 2].Text?.Trim();
+                            string tyLeTX1Str = worksheet.Cells[row, 3].Text?.Trim();
+                            string tyLeTX2Str = worksheet.Cells[row, 4].Text?.Trim();
+                            string tyLeThiStr = worksheet.Cells[row, 5].Text?.Trim();
 
-                            if (!string.IsNullOrEmpty(maMH) && !string.IsNullOrEmpty(tenMH))
+                            if (!string.IsNullOrEmpty(tenMH))
                             {
-                                var mh = db.Monhocs.Find(maMH);
-                                bool isNew = false;
-                                if (mh == null)
-                                {
-                                    mh = new Monhoc { MaMH = maMH };
-                                    isNew = true;
-                                }
-
+                                var mh = new Monhoc();
+                                mh.MaMH = GenerateNewMaMH();
                                 mh.TenMH = tenMH;
                                 mh.SoTinChi = int.TryParse(soTCStr, out int tc) ? tc : 3;
                                 mh.TyLeTX1 = int.TryParse(tyLeTX1Str, out int t1) ? t1 : 15;
                                 mh.TyLeTX2 = int.TryParse(tyLeTX2Str, out int t2) ? t2 : 15;
                                 mh.TyLeThi = int.TryParse(tyLeThiStr, out int tt) ? tt : 70;
 
-                                if (isNew) db.Monhocs.Add(mh);
+                                db.Monhocs.Add(mh);
                                 db.SaveChanges();
                                 soLuongThanhCong++;
                             }

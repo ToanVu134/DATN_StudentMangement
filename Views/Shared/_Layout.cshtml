@@ -10,9 +10,9 @@
 
     <style>
         :root {
-            --sidebar-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            --sidebar-bg: linear-gradient(180deg, #2b4566 0%, #111d33 100%);
             --primary-color: #3b82f6;
-            --bg-body: #f8fafc;
+            --bg-body: #f4f6f9;
         }
 
         body {
@@ -26,7 +26,6 @@
             min-height: 100vh;
         }
 
-        
         .sidebar {
             width: 260px;
             background: var(--sidebar-bg);
@@ -64,8 +63,8 @@
         .sidebar .nav-link {
             color: #94a3b8;
             padding: 12px 20px 12px 24px;
-            margin: 8px 16px;
-            border-radius: 10px;
+            margin: 8px 16px 8px 0;
+            border-radius: 0 10px 10px 0;
             display: flex;
             align-items: center;
             font-size: 1.05rem;
@@ -88,17 +87,6 @@
                 box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
             }
 
-                .sidebar .nav-link.active::before {
-                    content: '';
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    height: 100%;
-                    width: 4px;
-                    background-color: #fff;
-                    border-radius: 4px 0 0 4px;
-                }
-
             .sidebar .nav-link i {
                 width: 30px;
                 font-size: 1.2rem;
@@ -109,7 +97,6 @@
                 transform: scale(1.1);
             }
 
-        /* Main Content & Top Navbar */
         .main-content {
             flex: 1;
             margin-left: 260px;
@@ -170,21 +157,29 @@
                 <i class="fa-solid fa-graduation-cap"></i> <span>SENIKAA</span>
             </div>
             <div class="sidebar-menu">
-                <a href="@Url.Action("Index", "TongQuan")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "TongQuan" ? "active" : "")">
-                    <i class="fa-solid fa-chart-pie"></i> <span>Tổng quan</span>
-                </a>
+                @if (Session["Quyen"] != null && Session["Quyen"].ToString() == "Admin")
+                {
+                    <a href="@Url.Action("Index", "TongQuan")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "TongQuan" ? "active" : "")">
+                        <i class="fa-solid fa-chart-pie"></i> <span>Tổng quan</span>
+                    </a>
+                }
+
                 <a href="@Url.Action("Index", "LopHP")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "LopHP" ? "active" : "")">
                     <i class="fa-solid fa-layer-group"></i> <span>Lớp học phần</span>
                 </a>
-                <a href="@Url.Action("Index", "GiangVien")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "GiangVien" ? "active" : "")">
-                    <i class="fa-solid fa-user-tie"></i> <span>Giảng viên</span>
-                </a>
-                <a href="@Url.Action("Index", "SinhVien")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "SinhVien" ? "active" : "")">
-                    <i class="fa-solid fa-users"></i> <span>Sinh viên</span>
-                </a>
-                <a href="@Url.Action("Index", "MonHoc")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "MonHoc" ? "active" : "")">
-                    <i class="fa-solid fa-book"></i> <span>Môn học</span>
-                </a>
+
+                @if (Session["Quyen"] != null && Session["Quyen"].ToString() == "Admin")
+                {
+                    <a href="@Url.Action("Index", "GiangVien")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "GiangVien" ? "active" : "")">
+                        <i class="fa-solid fa-user-tie"></i> <span>Giảng viên</span>
+                    </a>
+                    <a href="@Url.Action("Index", "SinhVien")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "SinhVien" ? "active" : "")">
+                        <i class="fa-solid fa-users"></i> <span>Sinh viên</span>
+                    </a>
+                    <a href="@Url.Action("Index", "MonHoc")" class="nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "MonHoc" ? "active" : "")">
+                        <i class="fa-solid fa-book"></i> <span>Môn học</span>
+                    </a>
+                }
             </div>
         </nav>
 

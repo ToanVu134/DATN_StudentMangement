@@ -59,7 +59,19 @@
         <div class="col-md-12">
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body">
-                    <h6 class="text-center text-muted mb-4">BIẾN ĐỘNG SỐ LƯỢNG SINH VIÊN THEO TỪNG KHÓA</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="text-muted mb-0">BIẾN ĐỘNG SỐ LƯỢNG SINH VIÊN THEO TỪNG KHÓA</h6>
+                        <select id="filterKhoaNganh" class="form-select form-select-sm w-auto" onchange="updateChartKhoa()">
+                            <option value="">-- Tất cả ngành --</option>
+                            @if (ViewBag.DSNganh != null)
+                            {
+                                foreach (var n in ViewBag.DSNganh)
+                                {
+                                    <option value="@n">Ngành @n</option>
+                                }
+                            }
+                        </select>
+                    </div>
                     <div style="height: 350px; position: relative;">
                         <canvas id="chartKhoa"></canvas>
                     </div>
@@ -78,8 +90,8 @@
         const labelsNganh = @Html.Raw(Json.Encode(ViewBag.LabelsNganh));
         const dataNganh = @Html.Raw(Json.Encode(ViewBag.DataNganh));
 
-        const labelsKhoa = @Html.Raw(Json.Encode(ViewBag.LabelsKhoa));
-        const dataKhoa = @Html.Raw(Json.Encode(ViewBag.DataKhoa));
+        let labelsKhoa = @Html.Raw(Json.Encode(ViewBag.LabelsKhoa));
+        let dataKhoa = @Html.Raw(Json.Encode(ViewBag.DataKhoa));
 
         const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
@@ -107,7 +119,7 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
 
-        new Chart(document.getElementById('chartKhoa'), {
+        let chartKhoaInstance = new Chart(document.getElementById('chartKhoa'), {
             type: 'line',
             data: {
                 labels: labelsKhoa,
@@ -132,5 +144,14 @@
                 plugins: { legend: { display: false } }
             }
         });
+
+        function updateChartKhoa() {
+            let nganh = $('#filterKhoaNganh').val();
+            $.get('@Url.Action("GetThongKeKhoa", "TongQuan")', { nganh: nganh }, function(res) {
+                chartKhoaInstance.data.labels = res.labels;
+                chartKhoaInstance.data.datasets[0].data = res.data;
+                chartKhoaInstance.update();
+            });
+        }
     </script>
 }

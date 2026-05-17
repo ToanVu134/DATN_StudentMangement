@@ -40,7 +40,7 @@
                 <option value="">-- Tất cả năm --</option>
                 @foreach (var n in ViewBag.DSNamHoc)
                 {
-                    <option value="@n" @(Request.QueryString["namHoc"] == n ? "selected" : "")>@n</option>
+                    <option value="@n" @(ViewBag.SelectedNamHoc == n ? "selected" : "")>@n</option>
                 }
             </select>
         </div>
@@ -50,7 +50,17 @@
                 <option value="">-- Tất cả kỳ --</option>
                 @foreach (var k in ViewBag.DSHocKi)
                 {
-                    <option value="@k" @(Request.QueryString["hocKi"] == k ? "selected" : "")>@k</option>
+                    <option value="@k" @(ViewBag.SelectedHocKi == k ? "selected" : "")>@k</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Thứ</label>
+            <select id="fThu" class="form-select" onchange="loc()">
+                <option value="">-- Tất cả ngày --</option>
+                @foreach (var t in ViewBag.DSThu)
+                {
+                    <option value="@t" @(ViewBag.SelectedThu == t ? "selected" : "")>@t</option>
                 }
             </select>
         </div>
@@ -219,7 +229,6 @@
                         "sSortDescending": ": Kích hoạt để sắp xếp cột giảm dần"
                     }
                 } });
-
             if ($('#thongBaoHeThong').length > 0) {
                 setTimeout(function () {
                     $('#thongBaoHeThong').fadeOut('slow');
@@ -233,7 +242,7 @@
         });
 
         function loc() {
-            window.location.href = '@Url.Action("Index")?namHoc=' + $('#fNamHoc').val() + '&hocKi=' + $('#fHocKi').val();
+            window.location.href = '@Url.Action("Index")?namHoc=' + encodeURIComponent($('#fNamHoc').val()) + '&hocKi=' + encodeURIComponent($('#fHocKi').val()) + '&thu=' + encodeURIComponent($('#fThu').val());
         }
 
         @if (isAdmin)
